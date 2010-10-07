@@ -1,4 +1,4 @@
-var   sys       = require('sys')
+var   sys  = require('sys')
 ;
 
 // events for discoverability
@@ -26,17 +26,40 @@ EmailParser.prototype.parseMail = function() {
 	sys.puts('Mail with ' + mail.length + ' components');
 	this.header = mail[0];
 	delete(mail[0]);
-	this.body   = mail.join("\r\n\r\n");
+	//The substr removes the four characters added to the string by join
+	//Join does this because we used delete(mail[0]);
+	this.body   = mail.join("\r\n\r\n").substr(4);
 	
-	this.parseHeader();
+	this.parseHeaders();
 	this.parseBody();
 }
 
-EmailParser.prototype.parseHeader = function() {
+EmailParser.prototype.parseHeaders = function() {
 	if (this.header == '') {
-		error(this, "Empty Header");
+		error(this, 'Empty Header');
 	}
-	var headers = this.header.split("\r\n");
+	var headers     = new Array();
+	var header_arr  = this.header.split("\r\n");
+	var current_key = false;
+	for(var i = 0; i < header_arr.length; i++) {
+		tupple = header_arr[i].split(':');
+		if (header_arr[i].match(/^\s+/) || tupple.length < 2) {
+			if (current_key && header_arr[i].match(/^\s+/)) {
+				//sys.puts('Adding [' + header_arr[i] + '] to ' + current_key);
+				headers[current_key] += "\r\n" + header_arr[i];
+			} else {
+				sys.puts('Invalid Header: ' + header_arr[i]);
+			}
+			continue;
+		}
+		var key     = tupple[0].toLowerCase();
+		//sys.puts('Working with ' + key);
+		current_key = key;
+		delete(tupple[0]);
+		var value   = tupple.join(':').substr(1).replace(/^\s*|\s*$/, '');
+		headers[key] = value;
+	}
+	sys.puts(sys.inspect(headers));
 }
 
 EmailParser.prototype.parseBody = function() {
