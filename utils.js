@@ -1,10 +1,13 @@
+var   sys   = require('sys')
+;
+
 exports.parse_header_block = parse_header_block;
 function parse_header_block(content) {
 	var result      = new Array();
 	var header_arr  = content.split("\r\n");
 	var current_key = false;
 	for(var i = 0; i < header_arr.length; i++) {
-		tupple = header_arr[i].split(':', 2);
+		tupple = explode(header_arr[i], ':', 2);
 		if (header_arr[i].match(/^\s+/) || tupple.length < 2) {
 			if (current_key && header_arr[i].match(/^\s+/)) {
 				//sys.puts('Adding [' + header_arr[i] + '] to ' + current_key);
@@ -30,11 +33,11 @@ function parse_header(header) {
 	if (header[1]) {
 		var extra = trim(header[1]).split('&');
 		for (var i = 0; i < extra.length; i++) {
-			var tuple        = extra[i].split('=', 2);
-			if (tuple.length == 2) {
-				result[tuple[0]] = trim(tuple[1]);
+			var tupple = explode(extra[i], '=', 2);
+			if (tupple.length == 2) {
+				result[tupple[0]] = trim(tupple[1]);
 			} else {
-				result[tuple[0]] = '';
+				result[tupple[0]] = '';
 			}
 		}
 	}
@@ -43,7 +46,20 @@ function parse_header(header) {
 
 exports.parse_multitype = parse_multitype;
 function parse_multitype(content, border) {
-	//TODO
+	content = content.split(border);
+	for (var i = 0; i < content.length; i++) {
+		content[i] = parse_part(content[i]);
+	}
+}
+
+exports.parse_part = parse_part;
+function parse_part(content) {
+	content     = explode(content, "\r\n\r\n", 2);
+	if (content.length == 2) {
+		return { 'header': parse_header_block(content[0]), 'body': content[1] }
+	} else {
+		return { 'header': content[0], 'body': '' }
+	}
 }
 
 exports.trim = trim;
@@ -51,13 +67,15 @@ function trim(string) {
 	return string.replace(/^\s*|\s*$/, '')
 }
 
-exports.parse_part = parse_part;
-function parse_part (content) {
-	content     = content.split("\r\n\r\n", 2);
-	if (content.length == 2) {
-		return { 'header': content[0], 'content': content[1] }
-	} else {
-		return { 'header': '', 'content': content[0] }
+exports.explode = explode;
+function explode(string, delim, limit) {
+	if (!limit) {
+		return string.split(delim);
 	}
+	var parts  = string.split(delim);
+	
+	var result = parts.slice(0, limit - 1);
+	result.push(parts.slice(limit - 1).join(delim));
+	return result;
 }
 
