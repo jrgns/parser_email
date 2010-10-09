@@ -1,4 +1,5 @@
-var   sys  = require('sys')
+var   sys   = require('sys')
+    , utils = require('./utils')
 ;
 
 // events for discoverability
@@ -8,11 +9,14 @@ exports.parser_email = function parser_email () { return new EmailParser() }
 exports.EmailParser = EmailParser;
 
 function EmailParser () {
-	this.content = '';
-	this.header  = '';
-	this.body    = '';
-	
+	this.content        = '';
+	this.headerContent  = '';
+	this.bodyContent    = '';
+	this.headers        = new Array();
+	this.body           = new Array();	
 }
+
+trim         = utils.trim;
 
 EmailParser.prototype.setContent = function(content) {
 	this.content = content;
@@ -20,51 +24,49 @@ EmailParser.prototype.setContent = function(content) {
 
 EmailParser.prototype.parseMail = function() {
 	if (this.content == '') {
+		sys.puts("Empty Content");
+		return false;
 		error(this, "Empty Content");
 	}
-	var mail = this.content.split("\r\n\r\n");
-	sys.puts('Mail with ' + mail.length + ' components');
-	this.header = mail[0];
-	delete(mail[0]);
-	//The substr removes the four characters added to the string by join
-	//Join does this because we used delete(mail[0]);
-	this.body   = mail.join("\r\n\r\n").substr(4);
+	var mail = utils.parse_part(this.content);
+	this.headerContent = mail.header;
+	this.bodyContent   = mail.content;
 	
 	this.parseHeaders();
 	this.parseBody();
 }
 
 EmailParser.prototype.parseHeaders = function() {
-	if (this.header == '') {
+	if (this.headerContent == '') {
+		sys.puts("Empty Header");
+		return false;
 		error(this, 'Empty Header');
 	}
-	var headers     = new Array();
-	var header_arr  = this.header.split("\r\n");
-	var current_key = false;
-	for(var i = 0; i < header_arr.length; i++) {
-		tupple = header_arr[i].split(':');
-		if (header_arr[i].match(/^\s+/) || tupple.length < 2) {
-			if (current_key && header_arr[i].match(/^\s+/)) {
-				//sys.puts('Adding [' + header_arr[i] + '] to ' + current_key);
-				headers[current_key] += "\r\n" + header_arr[i];
-			} else {
-				sys.puts('Invalid Header: ' + header_arr[i]);
-			}
-			continue;
-		}
-		var key     = tupple[0].toLowerCase();
-		//sys.puts('Working with ' + key);
-		current_key = key;
-		delete(tupple[0]);
-		var value   = tupple.join(':').substr(1).replace(/^\s*|\s*$/, '');
-		headers[key] = value;
-	}
-	sys.puts(sys.inspect(headers));
+	this.headers = utils.parse_header_block(this.headerContent);	
 }
 
 EmailParser.prototype.parseBody = function() {
-	if (this.body == '') {
+	if (this.bodyContent == '') {
+		sys.puts("Empty Body");
+		return false;
 		error(this, "Empty Body");
+	}
+	sys.puts(sys.inspect(this.headers));
+	if (!this.headers['content-type']) {
+		this.headers['content-type'] = { 'value': 'text/plain' };
+	}
+	sys.puts('Have a content type: ' + this.headers['content-type'].value);
+	switch (this.headers['content-type'].value) {
+	case 'text/plain':
+		this.body = [{ 'content-type': 'text/plain', 'content': this.bodyContent }];
+		break;
+	case 'multipart/mixed':
+		var content = parse_multitype(this.bodyContent, this.headers['content-type'].border);
+		break;
+	default:
+		sys.puts('Unknown content type: ' + this.headers['content-type'].value);
+		sys.puts(sys.inspect(this.headers['content-type']));
+		break;
 	}
 }
 
