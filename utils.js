@@ -4,6 +4,9 @@ var   sys   = require('sys')
 exports.parse_header_block = parse_header_block;
 function parse_header_block(content) {
 	var result      = new Array();
+	if (content == '') {
+		return result;
+	}
 	var header_arr  = content.split("\r\n");
 	var current_key = false;
 	for(var i = 0; i < header_arr.length; i++) {
@@ -44,22 +47,59 @@ function parse_header(header) {
 	return result;
 }
 
+exports.parse_body_block = parse_body_block;
+function parse_body_block(content, headers) {
+	if (!headers['content-type']) {
+		headers['content-type'] = { 'value': 'text/plain' };
+	}
+	sys.puts('Have a content type: ' + headers['content-type'].value);
+	switch (headers['content-type'].value) {
+	case 'text/plain':
+	case 'text/html':
+		return [{ 'content-type': 'text/plain', 'content': this.content }];
+		break;
+	case 'multipart/mixed':
+		content = parse_multitype(content, headers['content-type'].boundary);
+		break;
+	case 'multipart/alternative':
+		content = parse_multitype(content, headers['content-type'].boundary);
+		break;
+	default:
+		sys.puts('Unknown content type: ' + headers['content-type'].value);
+		sys.puts(sys.inspect(headers['content-type']));
+		break;
+	}
+	return content;
+}
+
 exports.parse_multitype = parse_multitype;
-function parse_multitype(content, border) {
-	content = content.split(border);
+function parse_multitype(content, boundary) {
+	if (!content || !boundary) {
+		return false;
+	}
+	sys.puts('Working with boundary ' + boundary);
+	if (content.substr(0, boundary.length + 2) != ('--' + boundary)) {
+		sys.puts('Invalid Multi Part');
+		return false;
+	}
+	
+	content = content.split('--' + boundary + "\r\n");
 	for (var i = 0; i < content.length; i++) {
 		content[i] = parse_part(content[i]);
 	}
+	return content;
 }
 
 exports.parse_part = parse_part;
 function parse_part(content) {
-	content     = explode(content, "\r\n\r\n", 2);
+	content    = explode(content, "\r\n\r\n", 2);
+	var header = parse_header_block(content[0]);
 	if (content.length == 2) {
-		return { 'header': parse_header_block(content[0]), 'body': content[1] }
+		var body = parse_body_block(content[1], header);
 	} else {
-		return { 'header': content[0], 'body': '' }
+		var body = '';
 	}
+	return { 'header': header, 'body': body }
 }
 
 exports.trim = trim;
