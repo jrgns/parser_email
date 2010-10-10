@@ -19,8 +19,6 @@ EmailParser.prototype.setContent = function(content) {
 }
 
 EmailParser.prototype.parseMail = function() {
-	var mail = utils.parse_part(this.content);
-	this.headers = mail.header;
-	this.body    = mail.body;
+	return utils.parse_part(this.content);
 }
 

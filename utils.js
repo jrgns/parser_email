@@ -9,12 +9,14 @@ function parse_header_block(content) {
 	}
 	var header_arr  = content.split("\r\n");
 	var current_key = false;
-	for(var i = 0; i < header_arr.length; i++) {
+	var extra       = false;
+	for (var i = 0; i < header_arr.length; i++) {
 		tupple = explode(header_arr[i], ':', 2);
 		if (header_arr[i].match(/^\s+/) || tupple.length < 2) {
 			if (current_key && header_arr[i].match(/^\s+/)) {
 				//sys.puts('Adding [' + header_arr[i] + '] to ' + current_key);
-				result[current_key] += "\r\n" + header_arr[i];
+				result[current_key] += ' ' + trim(header_arr[i]);
+				extra = true;
 			} else {
 				sys.puts('Invalid Header: ' + header_arr[i]);
 			}
@@ -23,7 +25,10 @@ function parse_header_block(content) {
 		var key     = tupple[0].toLowerCase();
 		//sys.puts('Working with ' + key);
 		current_key = key;
-		result[key] = parse_header(tupple[1]);
+		result[key] = tupple[1];
+	}
+	for (key in result) {
+		result[key] = parse_header(result[key]);
 	}
 	return result;
 }
@@ -31,17 +36,22 @@ function parse_header_block(content) {
 exports.parse_header = parse_header;
 function parse_header(header) {
 	var result    = {};
+	var extra = false;
 	header        = header.split(';');
 	result.value  = trim(header[0]);
-	if (header[1]) {
-		var extra = trim(header[1]).split('&');
-		for (var i = 0; i < extra.length; i++) {
-			var tupple = explode(extra[i], '=', 2);
-			if (tupple.length == 2) {
-				result[tupple[0]] = trim(tupple[1]);
-			} else {
-				result[tupple[0]] = '';
-			}
+	//Start from second element
+	for(var i = 1; i < header.length; i++) {
+		if (header[i] == '') {
+			continue;
+		}
+		extra = true;
+		var tupple = explode(header[i], '=', 2);
+		var h_name = trim(tupple[0]);
+		//sys.puts('Extra Name: (' + j + ')' + h_name);
+		if (tupple.length == 2) {
+			result[h_name] = trim(tupple[1]);
+		} else {
+			result[h_name] = '';
 		}
 	}
 	return result;
@@ -65,8 +75,8 @@ function parse_body_block(content, headers) {
 		content = parse_multitype(content, headers['content-type'].boundary);
 		break;
 	default:
-		sys.puts('Unknown content type: ' + headers['content-type'].value);
-		sys.puts(sys.inspect(headers['content-type']));
+		//sys.puts('Unknown content type: ' + headers['content-type'].value);
+		//sys.puts(sys.inspect(headers['content-type']));
 		break;
 	}
 	return content;
