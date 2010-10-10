@@ -49,7 +49,7 @@ function parse_header(header) {
 		var h_name = trim(tupple[0]);
 		//sys.puts('Extra Name: (' + j + ')' + h_name);
 		if (tupple.length == 2) {
-			result[h_name] = trim(tupple[1]);
+			result[h_name] = trim(tupple[1]).replace(/^"/, '').replace(/"$/, '');
 		} else {
 			result[h_name] = '';
 		}
