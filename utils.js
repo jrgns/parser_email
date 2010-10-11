@@ -74,6 +74,9 @@ function parse_body_block(content, headers) {
 	case 'multipart/alternative':
 		content = parse_multitype(content, headers['content-type'].boundary);
 		break;
+	case 'image/png':
+	case 'image/jpeg':
+		content = content.replace(/\r\n/mg, '');
 	default:
 		//sys.puts('Unknown content type: ' + headers['content-type'].value);
 		//sys.puts(sys.inspect(headers['content-type']));
