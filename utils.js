@@ -62,7 +62,7 @@ function parse_body_block(content, headers) {
 	if (!headers['content-type']) {
 		headers['content-type'] = { 'value': 'text/plain' };
 	}
-	sys.puts('Have a content type: ' + headers['content-type'].value);
+	//sys.puts('Have a content type: ' + headers['content-type'].value);
 	switch (headers['content-type'].value) {
 	case 'text/plain':
 	case 'text/html':
@@ -90,7 +90,7 @@ function parse_multitype(content, boundary) {
 	if (!content || !boundary) {
 		return false;
 	}
-	sys.puts('Working with boundary ' + boundary);
+	//sys.puts('Working with boundary ' + boundary);
 	if (content.substr(0, boundary.length + 2) != ('--' + boundary)) {
 		sys.puts('Invalid Multi Part');
 		return false;

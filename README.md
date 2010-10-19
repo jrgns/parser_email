@@ -3,6 +3,11 @@ parser_email
 
 I needed a parser for Email, so I wrote one. At the moment it doesn't do much but parse the headers. Feel free to contribute.
 
+Install
+-------
+
+npm install parser_email
+
 Example
 -------
 
