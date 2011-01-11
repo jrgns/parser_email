@@ -14,7 +14,7 @@ Example
 This assumes that the file is saved somewhere on the file system, but it can easily be any type of incoming stream.
     var   fs        = require('fs')
         , sys       = require('sys')
-        , em_parse  = require('./parser_email')
+        , em_parse  = require('parser_email')
         
     var mail = '';
     var path_to_email = '~/emails/email.eml';
