@@ -66,7 +66,7 @@ function parse_body_block(content, headers) {
 	switch (headers['content-type'].value) {
 	case 'text/plain':
 	case 'text/html':
-		return [{ 'content-type': 'text/plain', 'content': this.content }];
+		return [{ 'content-type': 'text/plain', 'content': content }];
 		break;
 	case 'multipart/mixed':
 		content = parse_multitype(content, headers['content-type'].boundary);
