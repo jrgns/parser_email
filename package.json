@@ -1,18 +1,19 @@
 {
-	name: "parser_email",
-	description: "Simple multi part email parser",
-	homepage: "http://github.com/jrgns/parser_email",
-	version: "0.1.0",
-	engines: ["JavaScript", "node v0.3.0-pre"],
-	author: "J Jrgns du Toit <jrgns@jrgns.net>",
-	repository: {
-		type: "git",
-		url: "http://github.com/jrgns/parser_email"
+  "name": "parser_email",
+  "main": "./parser_email.js",
+  "description": "Simple multi part email parser",
+  "homepage": "http://github.com/jrgns/parser_email",
+  "version": "0.1.1",
+  "engine": ["JavaScript", "node >= v0.3.0-pre"],
+  "author": "J Jrgns du Toit <jrgns@jadeit.co.za>",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/jrgns/parser_email"
 	},
-	licenses: [
-		{
-			type: "MIT",
-			url: "http://github.com/jrgns/parser_email/raw/master/License.md"
-		}
-	]
+  "licenses": [
+    {
+      "type": "MIT",
+      "url": "http://github.com/jrgns/parser_email/raw/master/License.md"
+    }
+  ]
 }

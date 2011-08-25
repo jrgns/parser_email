@@ -95,7 +95,7 @@ function parse_multitype(content, boundary) {
 		sys.puts('Invalid Multi Part');
 		return false;
 	}
-	
+
 	content = content.split('--' + boundary + "\r\n");
 	for (var i = 0; i < content.length; i++) {
 		content[i] = parse_part(content[i]);
@@ -126,9 +126,8 @@ function explode(string, delim, limit) {
 		return string.split(delim);
 	}
 	var parts  = string.split(delim);
-	
+
 	var result = parts.slice(0, limit - 1);
 	result.push(parts.slice(limit - 1).join(delim));
 	return result;
 }
-
