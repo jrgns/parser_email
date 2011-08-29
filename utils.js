@@ -14,7 +14,7 @@ function parse_header_block(content) {
 		tupple = explode(header_arr[i], ':', 2);
 		if (header_arr[i].match(/^\s+/) || tupple.length < 2) {
 			if (current_key && header_arr[i].match(/^\s+/)) {
-				util.log('Adding [' + header_arr[i] + '] to ' + current_key);
+				//util.log('Adding [' + header_arr[i] + '] to ' + current_key);
 				result[current_key] += ' ' + trim(header_arr[i]);
 				extra = true;
 			} else {
@@ -23,7 +23,7 @@ function parse_header_block(content) {
 			continue;
 		}
 		var key     = tupple[0].toLowerCase();
-		util.log('Working with ' + key);
+		//util.log('Working with ' + key);
 		current_key = key;
 		result[key] = tupple[1];
 	}
@@ -47,7 +47,7 @@ function parse_header(header) {
 		extra = true;
 		var tupple = explode(header[i], '=', 2);
 		var h_name = trim(tupple[0]);
-		util.log('Extra Name: (' + i + ')' + h_name);
+		//util.log('Extra Name: (' + i + ')' + h_name);
 		if (tupple.length == 2) {
 			result[h_name] = trim(tupple[1]).replace(/^"/, '').replace(/"$/, '');
 		} else {
@@ -62,24 +62,24 @@ function parse_body_block(content, headers) {
 	if (!headers['content-type']) {
 		headers['content-type'] = { 'value': 'text/plain' };
 	}
+	var main_type = headers['content-type'].value.split("\/", 1) + '';
 	util.log('Have a content type: ' + headers['content-type'].value);
-	switch (headers['content-type'].value) {
-	case 'text/plain':
-	case 'text/html':
-		return [{ 'content-type': 'text/plain', 'content': content }];
+	util.log('Main Type: ' + main_type);
+	switch (main_type) {
+	case 'text':
+		return [{ 'content-type': headers['content-type'].value, 'content': content }];
 		break;
-	case 'multipart/mixed':
+	case 'multipart':
 		content = parse_multitype(content, headers['content-type'].boundary);
 		break;
-	case 'multipart/alternative':
-		content = parse_multitype(content, headers['content-type'].boundary);
-		break;
-	case 'image/png':
-	case 'image/jpeg':
+	case 'application':
+	case 'image':
 		content = content.replace(/\r\n/mg, '');
+		break;
 	default:
 		util.debug('Unknown content type: ' + headers['content-type'].value);
-		util.debug(sys.inspect(headers['content-type']));
+		util.debug('Unknown content type: ' + main_type);
+		util.debug(util.inspect(headers['content-type']));
 		break;
 	}
 	return content;
@@ -96,17 +96,28 @@ function parse_multitype(content, boundary) {
 		return false;
 	}
 
-	content = content.split('--' + boundary + "\r\n");
-	for (var i = 0; i < content.length; i++) {
-		content[i] = parse_part(content[i]);
+    var regexp = new RegExp('--' + boundary + '\\r?\\n', 'mg');
+    //util.debug(util.inspect(regexp));
+	content = content.split(regexp);
+	util.debug('Content Length: ' + content.length);
+	//Skip the first part, as it's empty
+	for (var i = 1; i < content.length; i++) {
+	    inner = true;
+	    util.log('Parsing Part ' + i + ': ' + boundary);
+	    content[i] = parse_part(content[i]);
 	}
 	return content;
 }
 
 exports.parse_part = parse_part;
 function parse_part(content) {
-	content    = content.split(/\r\n\r\n|\n\n/, 2);
+	var temp = content.split(/\r?\n\r?\n/gm);
+	content = new Array();
+	content.push(temp[0]);
+	content.push(temp.slice(1).join("\n\n"));
+
 	var header = parse_header_block(content[0]);
+
 	if (content.length == 2) {
 		var body = parse_body_block(content[1], header);
 	} else {
