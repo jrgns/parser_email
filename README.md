@@ -28,12 +28,12 @@ This assumes that the file is saved somewhere on the file system, but it can eas
     });
 
     stream.on('close', function () {
-    	parser = em_parse.parser_email();
-    	parser.setContent(mail);
-    	email  = parser.parseMail();
+    	parser = new EParser(mail);
 
-        //Output the headers
-        util.debug(sys.inspect(email.header))
-        //Output the body
-        util.debug(sys.inspect(email.body))
+        //At the moment Email Parser emit's one event: part
+        parser.on('part', function (type, body) {
+            util.log('Received a part of type ' + type);
+        });
+
+        parser.execute();
     });
