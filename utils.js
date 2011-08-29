@@ -1,4 +1,4 @@
-var   sys   = require('sys')
+var   util = require('util')
 ;
 
 exports.parse_header_block = parse_header_block;
@@ -7,23 +7,23 @@ function parse_header_block(content) {
 	if (content == '') {
 		return result;
 	}
-	var header_arr  = content.split("\r\n");
+	var header_arr  = content.split(/\r\n|\n/);
 	var current_key = false;
 	var extra       = false;
 	for (var i = 0; i < header_arr.length; i++) {
 		tupple = explode(header_arr[i], ':', 2);
 		if (header_arr[i].match(/^\s+/) || tupple.length < 2) {
 			if (current_key && header_arr[i].match(/^\s+/)) {
-				//sys.puts('Adding [' + header_arr[i] + '] to ' + current_key);
+				util.log('Adding [' + header_arr[i] + '] to ' + current_key);
 				result[current_key] += ' ' + trim(header_arr[i]);
 				extra = true;
 			} else {
-				sys.puts('Invalid Header: ' + header_arr[i]);
+				util.debug('Invalid Header: ' + header_arr[i]);
 			}
 			continue;
 		}
 		var key     = tupple[0].toLowerCase();
-		//sys.puts('Working with ' + key);
+		util.log('Working with ' + key);
 		current_key = key;
 		result[key] = tupple[1];
 	}
@@ -47,7 +47,7 @@ function parse_header(header) {
 		extra = true;
 		var tupple = explode(header[i], '=', 2);
 		var h_name = trim(tupple[0]);
-		//sys.puts('Extra Name: (' + j + ')' + h_name);
+		util.log('Extra Name: (' + i + ')' + h_name);
 		if (tupple.length == 2) {
 			result[h_name] = trim(tupple[1]).replace(/^"/, '').replace(/"$/, '');
 		} else {
@@ -62,7 +62,7 @@ function parse_body_block(content, headers) {
 	if (!headers['content-type']) {
 		headers['content-type'] = { 'value': 'text/plain' };
 	}
-	//sys.puts('Have a content type: ' + headers['content-type'].value);
+	util.log('Have a content type: ' + headers['content-type'].value);
 	switch (headers['content-type'].value) {
 	case 'text/plain':
 	case 'text/html':
@@ -78,8 +78,8 @@ function parse_body_block(content, headers) {
 	case 'image/jpeg':
 		content = content.replace(/\r\n/mg, '');
 	default:
-		//sys.puts('Unknown content type: ' + headers['content-type'].value);
-		//sys.puts(sys.inspect(headers['content-type']));
+		util.debug('Unknown content type: ' + headers['content-type'].value);
+		util.debug(sys.inspect(headers['content-type']));
 		break;
 	}
 	return content;
@@ -90,9 +90,9 @@ function parse_multitype(content, boundary) {
 	if (!content || !boundary) {
 		return false;
 	}
-	//sys.puts('Working with boundary ' + boundary);
+	util.log('Working with boundary ' + boundary);
 	if (content.substr(0, boundary.length + 2) != ('--' + boundary)) {
-		sys.puts('Invalid Multi Part');
+		util.debug('Invalid Multi Part');
 		return false;
 	}
 
@@ -105,7 +105,7 @@ function parse_multitype(content, boundary) {
 
 exports.parse_part = parse_part;
 function parse_part(content) {
-	content    = explode(content, "\r\n\r\n", 2);
+	content    = content.split(/\r\n\r\n|\n\n/, 2);
 	var header = parse_header_block(content[0]);
 	if (content.length == 2) {
 		var body = parse_body_block(content[1], header);
