@@ -12,13 +12,14 @@ Example
 -------
 
 This assumes that the file is saved somewhere on the file system, but it can easily be any type of incoming stream.
+
     var   fs        = require('fs')
-        , sys       = require('sys')
+        , util      = require('util')
         , em_parse  = require('parser_email')
-        
+
     var mail = '';
     var path_to_email = '~/emails/email.eml';
-    
+
     stream = fs.ReadStream(path_to_email);
     stream.setEncoding('ascii');
 
@@ -30,10 +31,9 @@ This assumes that the file is saved somewhere on the file system, but it can eas
     	parser = em_parse.parser_email();
     	parser.setContent(mail);
     	email  = parser.parseMail();
-    });
-    
-    //Output the headers
-    sys.puts(sys.inspect(email.header))
-    //Output the body
-    sys.puts(sys.inspect(email.body))
 
+        //Output the headers
+        util.debug(sys.inspect(email.header))
+        //Output the body
+        util.debug(sys.inspect(email.body))
+    });
