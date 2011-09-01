@@ -3,7 +3,7 @@
   "main": "./parser_email.js",
   "description": "Simple multi part email parser",
   "homepage": "http://github.com/jrgns/parser_email",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "engine": ["JavaScript", "node >= v0.3.0-pre"],
   "author": "J Jrgns du Toit <jrgns@jadeit.co.za>",
   "repository": {

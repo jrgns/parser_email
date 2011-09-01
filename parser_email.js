@@ -16,6 +16,9 @@ ParserEmail.prototype.execute = function() {
     var parser = this;
 
     parser.parse_part(parser.content);
+
+    //TODO
+    //parser.on('part', parser.handle_part);
 }
 
 ParserEmail.prototype.parse_header_block = function(content) {
@@ -76,7 +79,7 @@ ParserEmail.prototype.parse_header = function(header) {
 	return result;
 }
 
-ParserEmail.prototype.parse_body_block = function(content, headers) {
+ParserEmail.prototype.parse_body_block = function(headers, content) {
     var parser = this;
 
 	if (!headers['content-type']) {
@@ -102,8 +105,11 @@ ParserEmail.prototype.parse_body_block = function(content, headers) {
 		util.debug(util.inspect(headers['content-type']));
 		break;
 	}
-	parser.emit('part', headers['content-type'].value, content);
+	parser.emit('part', headers, content);
 	return content;
+}
+
+ParserEmail.prototype.handle_part = function(headers, content) {
 }
 
 ParserEmail.prototype.parse_multitype = function(content, boundary) {
@@ -139,12 +145,12 @@ ParserEmail.prototype.parse_part = function(content) {
 	content.push(temp[0]);
 	content.push(temp.slice(1).join("\n\n"));
 
-	var header = parser.parse_header_block(content[0]);
+	var headers = parser.parse_header_block(content[0]);
 
 	if (content.length == 2) {
-		var body = parser.parse_body_block(content[1], header);
+		var body = parser.parse_body_block(headers, content[1]);
 	} else {
 		var body = '';
 	}
-	return { 'header': header, 'body': body }
+	return { 'headers': headers, 'content': content }
 }
