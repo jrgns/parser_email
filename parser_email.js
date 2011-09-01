@@ -16,9 +16,6 @@ ParserEmail.prototype.execute = function() {
     var parser = this;
 
     parser.parse_part(parser.content);
-
-    //TODO
-    //parser.on('part', parser.handle_part);
 }
 
 ParserEmail.prototype.parse_header_block = function(content) {
@@ -79,39 +76,6 @@ ParserEmail.prototype.parse_header = function(header) {
 	return result;
 }
 
-ParserEmail.prototype.parse_body_block = function(headers, content) {
-    var parser = this;
-
-	if (!headers['content-type']) {
-		headers['content-type'] = { 'value': 'text/plain' };
-	}
-	var main_type = headers['content-type'].value.split("\/", 1) + '';
-	util.log('Have a content type: ' + headers['content-type'].value);
-	util.log('Main Type: ' + main_type);
-	switch (main_type) {
-	case 'text':
-		return [{ 'content-type': headers['content-type'].value, 'content': content }];
-		break;
-	case 'multipart':
-		content = parser.parse_multitype(content, headers['content-type'].boundary);
-		break;
-	case 'application':
-	case 'image':
-		content = content.replace(/\r\n/mg, '');
-		break;
-	default:
-		util.debug('Unknown content type: ' + headers['content-type'].value);
-		util.debug('Unknown content type: ' + main_type);
-		util.debug(util.inspect(headers['content-type']));
-		break;
-	}
-	parser.emit('part', headers, content);
-	return content;
-}
-
-ParserEmail.prototype.handle_part = function(headers, content) {
-}
-
 ParserEmail.prototype.parse_multitype = function(content, boundary) {
     var parser = this;
 
@@ -132,9 +96,8 @@ ParserEmail.prototype.parse_multitype = function(content, boundary) {
 	for (var i = 1; i < content.length; i++) {
 	    inner = true;
 	    util.log('Parsing Part ' + i + ': ' + boundary);
-	    content[i] = parser.parse_part(content[i]);
+	    parser.parse_part(content[i]);
 	}
-	return content;
 }
 
 ParserEmail.prototype.parse_part = function(content) {
@@ -145,12 +108,38 @@ ParserEmail.prototype.parse_part = function(content) {
 	content.push(temp[0]);
 	content.push(temp.slice(1).join("\n\n"));
 
+    //Compile the headers
 	var headers = parser.parse_header_block(content[0]);
-
-	if (content.length == 2) {
-		var body = parser.parse_body_block(headers, content[1]);
-	} else {
-		var body = '';
+	if (!headers['content-type']) {
+		headers['content-type'] = { 'value': 'text/plain' };
 	}
-	return { 'headers': headers, 'content': content }
+
+    //Compile the content
+	if (content.length == 2) {
+		content = content[1];
+	} else {
+		content = '';
+	}
+
+    //Rebuild some of the types
+	var main_type = headers['content-type'].value.split("\/", 1) + '';
+	util.log('Have a content type: ' + headers['content-type'].value);
+	util.log('Main Type: ' + main_type);
+	switch (main_type) {
+	case 'text':
+		break;
+	case 'multipart':
+		parser.parse_multitype(content, headers['content-type'].boundary);
+		break;
+	case 'application':
+	case 'image':
+		content = content.replace(/\r\n/mg, '');
+		break;
+	default:
+		util.debug('Unknown content type: ' + headers['content-type'].value);
+		util.debug('Unknown content type: ' + main_type);
+		util.debug(util.inspect(headers['content-type']));
+		break;
+	}
+	parser.emit('part', headers, content);
 }
