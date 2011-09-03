@@ -9,8 +9,6 @@ function ParserEmail(content) {
     var parser = this;
 
     parser.content = content;
-
-    parser.on('raw_part', parser.parse_raw_part);
 }
 util.inherits(ParserEmail, events.EventEmitter);
 
@@ -122,8 +120,11 @@ ParserEmail.prototype.parse_part = function(content) {
 	} else {
 		content = '';
 	}
+
 	util.debug('Emitting raw part on ' + headers['content-type'].value);
 	parser.emit('raw_part', headers, content);
+
+	parser.parse_raw_part(headers, content);
 }
 
 ParserEmail.prototype.parse_raw_part = function(headers, content) {
