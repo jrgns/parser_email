@@ -28,7 +28,7 @@ This assumes that the file is saved somewhere on the file system, but it can eas
     });
 
     stream.on('close', function () {
-    	parser = new EParser(mail);
+    	parser = new em_parse(mail);
 
         //At the moment Email Parser emit's one event: part
         parser.on('part', function (type, body) {
